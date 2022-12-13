@@ -1,0 +1,59 @@
+ AWSEM-HO: template based modeling
+Skip to end of metadata
+
+    Attachments:4
+    Added by Mingchen Chen, last edited by Shikai Jin on Apr 15, 2018  (view change)
+
+Go to start of metadata
+1: Do HHpred with the latest database. You might install it locally or use the server directly. 
+Here is the link to the server: https://toolkit.tuebingen.mpg.de/#/tools/hhpred
+
+2: Select templates based on confidence score. (usually > 90% are good templates). Meanwhile, when you select templates, you might notice most good templates are overlapping too much. In that situation, you might need to select the good templates, as well as cover the sequence as much as possible. 
+Template selection is tricky, and it’s the reason why this program is not fully automated.
+
+3: After selecting these templates, copy the sequence alignment (as shown in the example file, alignment_1z94) in an empty file, put the target on the first line, template on the second line. Meanwhile, you might need to note the start point in each sequence for further use.
+
+4: Select aligned regions in the template. Use the script SelectAlign_PDB.py SelectAlign_PDB.py
+Example input is: python2 SelectAlign_PDB.py  inputpdb  outpdb  target_start  template_start  alignmentfile.
+For each of the templates, generate the selected PDB file. 
+Attention:
+1) Report on Apr/14/2018: I tried use the current version of Biopython(1.7.1) and got following error:
+ 
+
+Traceback (most recent call last):
+File "SelectAlign_PDB.py", line 84, in <module>
+residue.id = (' ', resind, ' ');
+File "/usr/local/lib/python2.7/dist-packages/Bio/PDB/Entity.py", line 173, in id
+" this entity.".format(self._id, value, value))
+ValueError: Cannot change id from `(' ', 1, ' ')` to `(' ', 10, ' ')`. The id `(' ', 10, ' ')` is already used for a sibling of this entity.
+
+If you got the same thing, please use biopython version 1.6.8 and it works. If you can't find that, please download this bio.zip Bio.zip and extract it on the same folder of above python file and run.
+
+ 
+2) If you get error like below, please make sure your pdb has only one chain and labeled as 'A'. The easiest way is to use pymol command alter (chain T),chain='A' to change label from T to A.
+ 
+
+File "SelectAlign_PDB.py", line 79, in <module>
+model = s[0]
+File "/usr/local/lib/python2.7/dist-packages/Bio/PDB/Entity.py", line 40, in __getitem__
+return self.child_dict[id]
+KeyError: 0
+
+5: Convert the aligned PDBs to rnative.dat matrix format. Use the script  GetCACADistancesFile_multiChain_part.py GetCACADistancesFile_multiChain_part.py
+Run the above file like this command:  python2 GetCACADistancesFile_multiChain_part.py temp1 rnative.dat 266 , temp1 is the PDB filename and 266 is the last amino acid index of temp1.
+
+6: For multiple templates, you might have multiple rnative.dat files. In that case, you might need to merge them into a single file. Use the script  Rnative_merge.py, this script merges three templates into one. Another script merges two templates into one. Rnative_merge.py
+
+The reason why I did only merge 2/3 templates is that Homology modelling doesn’t use too many templates.
+
+7: After that, please do HO simulation with AWSEM-HO model.
+[Native_Bias]
+200            ## strength
+1.0             ## epsilon
+2                ## sequence separation
+0.15           ## sigma factor
+2.0             ## cutoff distance
+rnative.dat
+
+For detailed questions, please email mc70@rice.edu.
+
